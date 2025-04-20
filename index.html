@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Phân Tích Tài Xỉu MD5 - vkhanhh v2</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #0056b3;
+        }
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            display: inline-block; /* Changed from block to inline-block */
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px; /* Add some space between buttons */
+            margin-top: 5px; /* Add space above buttons */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            white-space: pre-wrap; /* Preserve line breaks */
+            word-wrap: break-word;
+        }
+        .hidden-section {
+            display: none; /* Initially hidden */
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ccc;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+         .probability-tai {
+            color: #dc3545; /* Red for Tài */
+            font-weight: bold;
+        }
+        .probability-xiu {
+            color: #007bff; /* Blue for Xỉu */
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Tool Phân Tích Tài Xỉu MD5 - vkhanhh v2</h1>
+
+    <!-- Phần Phân Tích MD5 -->
+    <div class="section">
+        <h2>Phân Tích MD5</h2>
+        <button id="toggleMd5Button">Hiện/Ẩn Nhập Mã MD5</button>
+        <div id="md5AnalysisSection" class="hidden-section">
+            <label for="md5Input">Mã MD5:</label>
+            <input type="text" id="md5Input" placeholder="Sao chép mã MD5 vào đây để phân tích...">
+            <button id="analyzeMd5Button">Phân tích MD5</button>
+            <div id="md5Result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Phần Phân Tích Lịch Sử Cầu -->
+    <div class="section">
+        <h2>Phân Tích Lịch Sử Cầu</h2>
+        <label for="history15Input">Nhập 15 kết quả gần nhất (VD: TXXTTXXTXTXXTTX):</label>
+        <input type="text" id="history15Input" placeholder="Chỉ nhập T (Tài) hoặc X (Xỉu)">
+
+        <label for="history10Input">Nhập 10 kết quả gần nhất (VD: TXTXXTTXXT):</label>
+        <input type="text" id="history10Input" placeholder="Chỉ nhập T (Tài) hoặc X (Xỉu)">
+
+        <button id="analyzeHistoryButton">Phân tích Lịch Sử</button>
+        <div id="historicalResult" class="result" style="display: none;"></div>
+    </div>
+
+</div>
+
+<script>
+    // --- Elements ---
+    const toggleMd5Button = document.getElementById('toggleMd5Button');
+    const md5AnalysisSection = document.getElementById('md5AnalysisSection');
+    const md5Input = document.getElementById('md5Input');
+    const analyzeMd5Button = document.getElementById('analyzeMd5Button');
+    const md5Result = document.getElementById('md5Result');
+
+    const history15Input = document.getElementById('history15Input');
+    const history10Input = document.getElementById('history10Input');
+    const analyzeHistoryButton = document.getElementById('analyzeHistoryButton');
+    const historicalResult = document.getElementById('historicalResult');
+
+    // --- Event Listeners ---
+
+    // Toggle MD5 Section Visibility
+    toggleMd5Button.addEventListener('click', () => {
+        if (md5AnalysisSection.style.display === 'none' || md5AnalysisSection.style.display === '') {
+            md5AnalysisSection.style.display = 'block';
+            toggleMd5Button.textContent = 'Ẩn Nhập Mã MD5';
+        } else {
+            md5AnalysisSection.style.display = 'none';
+            toggleMd5Button.textContent = 'Hiện Nhập Mã MD5';
+            md5Result.style.display = 'none'; // Hide result when section is hidden
+            md5Input.value = ''; // Clear input when hidden
+        }
+    });
+
+    // Analyze MD5 Button Click
+    analyzeMd5Button.addEventListener('click', () => {
+        const md5Value = md5Input.value.trim().toLowerCase(); // Use lowercase for consistency
+        md5Result.style.display = 'block'; // Show result area
+        md5Result.innerHTML = ''; // Clear previous result
+
+        if (md5Value.length !== 32 || !/^[a-f0-9]{32}$/.test(md5Value)) {
+            md5Result.innerHTML = '<p class="error">Lỗi: Vui lòng nhập một mã MD5 hợp lệ (32 ký tự gồm số 0-9 và chữ a-f).</p>';
+            return;
+        }
+
+        const lastChar = md5Value.slice(-1); // Get the last character
+        let analysisMethod = "Phân tích dựa trên ký tự cuối của mã MD5:\n";
+        analysisMethod += `Mã MD5: ${md5Value}\n`;
+        analysisMethod += `Ký tự cuối: ${lastChar}\n`;
+
+        let prediction = '';
+        let probabilityClass = '';
+
+        // Simple common rule: digit = Xỉu, letter = Tài
+        if (/\d/.test(lastChar)) { // Check if it's a digit (0-9)
+            prediction = 'XỈU';
+            probabilityClass = 'probability-xiu';
+             analysisMethod += `Quy tắc: Ký tự cuối là SỐ (${lastChar}) => Dự đoán là XỈU.`;
+        } else if (/[a-f]/.test(lastChar)) { // Check if it's a letter (a-f)
+            prediction = 'TÀI';
+            probabilityClass = 'probability-tai';
+            analysisMethod += `Quy tắc: Ký tự cuối là CHỮ (${lastChar}) => Dự đoán là TÀI.`;
+        } else {
+             // Should not happen with validated input, but good practice
+             md5Result.innerHTML = '<p class="error">Lỗi: Không thể xác định ký tự cuối hợp lệ.</p>';
+             return;
+        }
+
+        md5Result.innerHTML = `
+            <p><strong>Cách phân tích MD5:</strong></p>
+            <p>${analysisMethod.replace(/\n/g, '<br>')}</p> <!-- Preserve line breaks in HTML -->
+            <p><strong>Kết quả dự đoán: <span class="${probabilityClass}">${prediction}</span></strong></p>
+            <p><i>Lưu ý: Quy tắc phân tích MD5 có thể khác nhau tùy cổng game. Đây là quy tắc phổ biến, không đảm bảo chính xác tuyệt đối.</i></p>
+        `;
+    });
+
+    // Analyze History Button Click
+    analyzeHistoryButton.addEventListener('click', () => {
+        const history15 = history15Input.value.trim().toUpperCase();
+        const history10 = history10Input.value.trim().toUpperCase();
+        historicalResult.style.display = 'block'; // Show result area
+        historicalResult.innerHTML = ''; // Clear previous result
+
+        const combinedHistory = history15 + history10;
+        let validHistory = '';
+
+        // Validate and filter input
+        for (let char of combinedHistory) {
+            if (char === 'T' || char === 'X') {
+                validHistory += char;
+            }
+        }
+
+        if (validHistory.length === 0) {
+            historicalResult.innerHTML = '<p class="error">Lỗi: Vui lòng nhập lịch sử hợp lệ (chỉ chứa T hoặc X).</p>';
+            return;
+        }
+
+        let taiCount = 0;
+        let xiuCount = 0;
+
+        for (let char of validHistory) {
+            if (char === 'T') {
+                taiCount++;
+            } else if (char === 'X') {
+                xiuCount++;
+            }
+        }
+
+        const totalGames = validHistory.length;
+        const taiPercentage = totalGames > 0 ? ((taiCount / totalGames) * 100).toFixed(2) : 0;
+        const xiuPercentage = totalGames > 0 ? ((xiuCount / totalGames) * 100).toFixed(2) : 0;
+
+        historicalResult.innerHTML = `
+            <p><strong>Phân tích lịch sử ${totalGames} ván gần nhất:</strong></p>
+            <p>Số lần Tài (T): ${taiCount}</p>
+            <p>Số lần Xỉu (X): ${xiuCount}</p>
+            <p><strong>Xác suất dự đoán cho ván tiếp theo:</strong></p>
+            <p><span class="probability-tai">TÀI: ${taiPercentage}%</span></p>
+            <p><span class="probability-xiu">XỈU: ${xiuPercentage}%</span></p>
+            <p><i>Lưu ý: Phân tích này dựa trên tần suất thống kê các ván đã nhập và không đảm bảo kết quả chính xác cho ván sau.</i></p>
+        `;
+    });
+
+</script>
+
+</body>
+</html>
